@@ -188,17 +188,13 @@ impl NoQADirective {
                             rules,
                         })))
                     } else {
-                        Err(SQLBaseError {
-                            fixable: false,
-                            warning: false,
+                        // `noqa:` with nothing after it ignores everything,
+                        // as in SQLFluff.
+                        Ok(Some(NoQADirective::LineIgnoreAll(LineIgnoreAll {
                             line_no,
                             line_pos,
-                            description:
-                                "Malformed 'noqa' section. Expected 'noqa: <rule>[,...] | all'"
-                                    .into(),
-                            rule: None,
-                            source_slice: Default::default(),
-                        })
+                            raw_string: original_comment.to_string(),
+                        })))
                     }
                 } else {
                     Err(SQLBaseError {
@@ -703,11 +699,19 @@ mod tests {
             ),
             (
                 "noqa:",
-                Err("Malformed 'noqa' section. Expected 'noqa: <rule>[,...] | all'"),
+                Ok(Some(NoQADirective::LineIgnoreAll(LineIgnoreAll {
+                    line_no: 0,
+                    line_pos: 0,
+                    raw_string: "noqa:".to_string(),
+                }))),
             ),
             (
                 "noqa: ",
-                Err("Malformed 'noqa' section. Expected 'noqa: <rule>[,...] | all'"),
+                Ok(Some(NoQADirective::LineIgnoreAll(LineIgnoreAll {
+                    line_no: 0,
+                    line_pos: 0,
+                    raw_string: "noqa: ".to_string(),
+                }))),
             ),
             (
                 "noqa: LT01,LT02",
