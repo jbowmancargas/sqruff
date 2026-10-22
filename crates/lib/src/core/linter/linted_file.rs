@@ -177,6 +177,14 @@ impl LintedFile {
         )
     }
 
+    /// Like [`LintedFile::fix_string`], but ready to write back over the
+    /// original: puts back a leading byte order mark and, when the input used
+    /// only `\r\n`, its line endings.
+    pub fn fix_file_string(self) -> String {
+        let newline_map = self.newline_map.clone();
+        newline_map.restore(self.fix_string())
+    }
+
     pub(crate) fn generate_source_patches(
         patches: Vec<FixPatch>,
         templated_file: &TemplatedFile,

@@ -68,7 +68,7 @@ pub(crate) fn run_fix(
                 continue;
             }
             let path = std::mem::take(&mut file.path);
-            let fixed = file.fix_string();
+            let fixed = file.fix_file_string();
             std::fs::write(path, fixed).unwrap();
         }
 
@@ -120,7 +120,7 @@ pub(crate) fn run_fix_stdin(
         && result.has_fixes()
         && (fix_even_unparsable || !result.has_parse_or_templating_errors());
     let output = if has_fixes {
-        result.fix_string()
+        result.fix_file_string()
     } else {
         read_in
     };

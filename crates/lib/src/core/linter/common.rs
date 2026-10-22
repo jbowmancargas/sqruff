@@ -51,19 +51,38 @@ pub struct ParsedString {
     pub alternate_variants: Vec<ParsedVariant>,
 }
 
+const BOM: char = '\u{feff}';
+
 /// Maps byte offsets in the newline-normalised source back to the original input.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct NewlineMap {
     /// Offsets, in the normalised text, of each `\n` that replaced a `\r\n`.
     collapsed_crlf: Vec<usize>,
+    /// The input started with a UTF-8 byte order mark, which was removed.
+    bom: bool,
+    /// Every newline in the input was `\r\n`.
+    all_crlf: bool,
 }
 
 impl NewlineMap {
     /// Normalise newlines to unix-style line endings, recording where `\r\n`
     /// sequences were collapsed so offsets can later be mapped back.
+    ///
+    /// A leading UTF-8 byte order mark is also removed (as SQLFluff does when
+    /// reading files), since the lexer can't make sense of it.
     pub fn normalise(source: &str) -> (Cow<'_, str>, Self) {
+        let (source, bom) = match source.strip_prefix(BOM) {
+            Some(rest) => (rest, true),
+            None => (source, false),
+        };
         if !source.contains('\r') {
-            return (Cow::Borrowed(source), Self::default());
+            return (
+                Cow::Borrowed(source),
+                Self {
+                    bom,
+                    ..Self::default()
+                },
+            );
         }
 
         let mut normalised = String::with_capacity(source.len());
@@ -81,12 +100,40 @@ impl NewlineMap {
         }
         normalised.push_str(rest);
 
-        (Cow::Owned(normalised), Self { collapsed_crlf })
+        let all_crlf = collapsed_crlf.len() == normalised.matches('\n').count();
+        (
+            Cow::Owned(normalised),
+            Self {
+                collapsed_crlf,
+                bom,
+                all_crlf,
+            },
+        )
+    }
+
+    /// Put back what [`NewlineMap::normalise`] took out of a whole fixed file:
+    /// the byte order mark, and `\r\n` endings when the input used only those.
+    pub fn restore(&self, fixed: String) -> String {
+        let fixed = if self.all_crlf {
+            fixed.replace('\n', "\r\n")
+        } else {
+            fixed
+        };
+        if self.bom {
+            let mut with_bom = String::with_capacity(fixed.len() + BOM.len_utf8());
+            with_bom.push(BOM);
+            with_bom.push_str(&fixed);
+            with_bom
+        } else {
+            fixed
+        }
     }
 
     /// Translate a byte offset in the normalised text to the original input.
     pub fn to_original_offset(&self, offset: usize) -> usize {
-        offset
+        let bom_len = if self.bom { BOM.len_utf8() } else { 0 };
+        bom_len
+            + offset
             + self
                 .collapsed_crlf
                 .partition_point(|&collapsed| collapsed < offset)
@@ -130,5 +177,25 @@ mod tests {
         assert!(matches!(normalised, Cow::Borrowed(_)));
         assert_eq!(map, NewlineMap::default());
         assert_eq!(map.to_original_range(3..9), 3..9);
+        assert_eq!(map.restore("select 1\n".into()), "select 1\n");
+    }
+
+    #[test]
+    fn newline_map_strips_and_restores_bom() {
+        let source = "\u{feff}SELECT 1\n";
+        let (normalised, map) = NewlineMap::normalise(source);
+        assert_eq!(normalised, "SELECT 1\n");
+        assert_eq!(&source[map.to_original_range(0..6)], "SELECT");
+        assert_eq!(map.restore("select 1\n".into()), "\u{feff}select 1\n");
+    }
+
+    #[test]
+    fn newline_map_restores_crlf_only_when_consistent() {
+        let (_, map) = NewlineMap::normalise("\u{feff}SELECT\r\n1\r\n");
+        assert_eq!(map.restore("select\n1\n".into()), "\u{feff}select\r\n1\r\n");
+
+        // Mixed endings stay normalised, as before.
+        let (_, map) = NewlineMap::normalise("SELECT\r\n1\n");
+        assert_eq!(map.restore("select\n1\n".into()), "select\n1\n");
     }
 }
