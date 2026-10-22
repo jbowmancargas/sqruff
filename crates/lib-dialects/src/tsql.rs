@@ -2925,7 +2925,11 @@ pub fn raw_dialect() -> Dialect {
                             .to_matchable(),
                             one_of(vec![
                                 Ref::new("ExecuteUnicodeLiteralExpressionSegment").to_matchable(),
-                                Ref::new("ExpressionSegment").to_matchable(),
+                                // A SELECT on the next line (no `;` after EXEC) starts a
+                                // new statement; it is never a bare argument.
+                                Ref::new("ExpressionSegment")
+                                    .exclude(Ref::keyword("SELECT"))
+                                    .to_matchable(),
                                 Sequence::new(vec![
                                     Ref::new("ParameterNameSegment").to_matchable(),
                                     Sequence::new(vec![Ref::keyword("OUTPUT").to_matchable()])
@@ -4121,6 +4125,20 @@ pub fn raw_dialect() -> Dialect {
         .to_matchable()
         .into(),
     )]);
+
+    // A type method can follow any expression atom, e.g. the FOR XML string
+    // aggregation idiom `(SELECT ... FOR XML PATH(''), TYPE).value('.', 'nvarchar(max)')`.
+    dialect.replace_grammar(
+        "AccessorGrammar",
+        AnyNumberOf::new(vec![
+            one_of(vec![
+                Ref::new("ArrayAccessorSegment").to_matchable(),
+                Ref::new("DatatypeMethodSegment").to_matchable(),
+            ])
+            .to_matchable(),
+        ])
+        .to_matchable(),
+    );
 
     // A query hint can follow a set operation:
     // SELECT ... INTERSECT SELECT ... OPTION (MERGE JOIN)
