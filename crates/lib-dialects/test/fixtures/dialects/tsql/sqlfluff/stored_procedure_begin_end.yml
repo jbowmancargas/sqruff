@@ -79,7 +79,8 @@ file:
         - keyword: INT
       - comparison_operator:
         - raw_comparison_operator: =
-      - integer_literal: '1'
+      - expression:
+        - integer_literal: '1'
       - keyword: AS
       - procedure_statement:
         - statement:
@@ -126,7 +127,8 @@ file:
         - keyword: INT
       - comparison_operator:
         - raw_comparison_operator: =
-      - integer_literal: '1'
+      - expression:
+        - integer_literal: '1'
       - keyword: READONLY
       - keyword: AS
       - procedure_statement:
@@ -172,7 +174,8 @@ file:
         - keyword: INT
       - comparison_operator:
         - raw_comparison_operator: =
-      - integer_literal: '1'
+      - expression:
+        - integer_literal: '1'
       - keyword: AS
       - procedure_statement:
         - statement:

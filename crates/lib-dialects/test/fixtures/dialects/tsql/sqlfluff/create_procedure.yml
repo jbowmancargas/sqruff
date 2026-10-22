@@ -180,7 +180,8 @@ file:
         - keyword: 'NULL'
         - comparison_operator:
           - raw_comparison_operator: =
-        - null_literal: 'NULL'
+        - expression:
+          - null_literal: 'NULL'
         - comma: ','
         - tsql_variable: '@fooReadonly'
         - data_type:
@@ -192,8 +193,9 @@ file:
               - end_bracket: )
         - comparison_operator:
           - raw_comparison_operator: =
-        - naked_identifier: N
-        - quoted_literal: '''foo'''
+        - expression:
+          - naked_identifier: N
+          - quoted_literal: '''foo'''
         - keyword: READONLY
         - comma: ','
         - tsql_variable: '@bar'
@@ -203,7 +205,8 @@ file:
         - keyword: 'NULL'
         - comparison_operator:
           - raw_comparison_operator: =
-        - null_literal: 'NULL'
+        - expression:
+          - null_literal: 'NULL'
         - keyword: OUTPUT
         - comma: ','
         - tsql_variable: '@output'
@@ -287,7 +290,8 @@ file:
         - keyword: 'NULL'
         - comparison_operator:
           - raw_comparison_operator: =
-        - null_literal: 'NULL'
+        - expression:
+          - null_literal: 'NULL'
         - comma: ','
         - tsql_variable: '@bar'
         - data_type:
@@ -300,7 +304,8 @@ file:
         - keyword: 'NULL'
         - comparison_operator:
           - raw_comparison_operator: =
-        - null_literal: 'NULL'
+        - expression:
+          - null_literal: 'NULL'
         - end_bracket: )
       - keyword: WITH
       - keyword: ENCRYPTION
@@ -342,7 +347,8 @@ file:
         - keyword: 'NULL'
         - comparison_operator:
           - raw_comparison_operator: =
-        - null_literal: 'NULL'
+        - expression:
+          - null_literal: 'NULL'
         - comma: ','
         - tsql_variable: '@bar'
         - data_type:
@@ -355,7 +361,8 @@ file:
         - keyword: 'NULL'
         - comparison_operator:
           - raw_comparison_operator: =
-        - null_literal: 'NULL'
+        - expression:
+          - null_literal: 'NULL'
         - end_bracket: )
       - keyword: WITH
       - keyword: ENCRYPTION
@@ -653,13 +660,14 @@ file:
           - keyword: UNIQUEIDENTIFIER
         - comparison_operator:
           - raw_comparison_operator: =
-        - function:
-          - function_name:
-            - function_name_identifier: NEWID
-          - function_contents:
-            - bracketed:
-              - start_bracket: (
-              - end_bracket: )
+        - expression:
+          - function:
+            - function_name:
+              - function_name_identifier: NEWID
+            - function_contents:
+              - bracketed:
+                - start_bracket: (
+                - end_bracket: )
         - comma: ','
         - tsql_variable: '@output'
         - data_type:

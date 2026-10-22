@@ -130,3 +130,16 @@ test_tsql_variable_assignment:
   configs:
     core:
       dialect: tsql
+
+test_tsql_procedure_parameter_default:
+  pass_str: |
+    CREATE PROCEDURE dbo.p
+        @a INT = NULL,
+        @b VARCHAR(10) = null OUTPUT
+    AS
+    BEGIN
+        SELECT @a;
+    END
+  configs:
+    core:
+      dialect: tsql

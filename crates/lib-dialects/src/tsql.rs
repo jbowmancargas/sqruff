@@ -7037,22 +7037,11 @@ pub fn raw_dialect() -> Dialect {
                 ])
                 .config(|this| this.optional())
                 .to_matchable(),
-                // Optional default value
+                // Optional default value. Wrapped as an expression (like SQLFluff)
+                // so CV05 doesn't treat `@p INT = NULL` as a NULL comparison.
                 Sequence::new(vec![
                     Ref::new("EqualsSegment").to_matchable(),
-                    one_of(vec![
-                        Ref::new("LiteralGrammar").to_matchable(),
-                        Ref::keyword("NULL").to_matchable(),
-                        // Function calls as defaults (e.g., NEWID())
-                        Ref::new("FunctionSegment").to_matchable(),
-                        // String literal with prefix (e.g., N'foo')
-                        Sequence::new(vec![
-                            Ref::new("NakedIdentifierSegment").to_matchable(), // N, B, X etc.
-                            Ref::new("QuotedLiteralSegment").to_matchable(),
-                        ])
-                        .to_matchable(),
-                    ])
-                    .to_matchable(),
+                    Ref::new("ExpressionSegment").to_matchable(),
                 ])
                 .config(|this| this.optional())
                 .to_matchable(),
