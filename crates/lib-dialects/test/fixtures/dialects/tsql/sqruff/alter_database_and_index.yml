@@ -1,0 +1,40 @@
+file:
+- batch:
+  - statement:
+    - alter_database_statement:
+      - keyword: ALTER
+      - keyword: DATABASE
+      - database_reference:
+        - naked_identifier: msdb
+      - keyword: SET
+      - naked_identifier: DELAYED_DURABILITY
+      - comparison_operator:
+        - raw_comparison_operator: =
+      - keyword: FORCED
+  - statement_terminator: ;
+  - statement:
+    - alter_database_statement:
+      - keyword: ALTER
+      - keyword: DATABASE
+      - keyword: CURRENT
+      - keyword: SET
+      - naked_identifier: DELAYED_DURABILITY
+      - comparison_operator:
+        - raw_comparison_operator: =
+      - keyword: ALLOWED
+  - statement_terminator: ;
+  - statement:
+    - alter_index_statement:
+      - keyword: ALTER
+      - keyword: INDEX
+      - keyword: ALL
+      - keyword: ON
+      - table_reference:
+        - object_reference:
+          - naked_identifier: msdb
+          - dot: .
+          - naked_identifier: dbo
+          - dot: .
+          - naked_identifier: sysjobhistory
+      - keyword: REBUILD
+  - statement_terminator: ;

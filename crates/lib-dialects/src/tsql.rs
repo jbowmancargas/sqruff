@@ -3890,6 +3890,7 @@ pub fn raw_dialect() -> Dialect {
             Ref::new("RestoreDatabaseStatementSegment").to_matchable(),
             Ref::new("DropDatabaseStatementSegment").to_matchable(),
             Ref::new("CreateIndexStatementSegment").to_matchable(),
+            Ref::new("AlterIndexStatementSegment").to_matchable(),
             Ref::new("DropIndexStatementSegment").to_matchable(),
             Ref::new("CreateViewStatementSegment").to_matchable(),
             Ref::new("OpenQueryDeleteStatementSegment").to_matchable(),
@@ -3980,6 +3981,146 @@ pub fn raw_dialect() -> Dialect {
         ])
         .to_matchable(),
     );
+
+    // https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-index-transact-sql
+    // Covers the common forms; index options are parsed as generic
+    // `option = value` pairs rather than SQLFluff's full option lists.
+    fn low_priority_options() -> Matchable {
+        Bracketed::new(vec![
+            Delimited::new(vec![
+                Sequence::new(vec![
+                    Ref::new("NakedIdentifierSegment").to_matchable(),
+                    Ref::new("EqualsSegment").to_matchable(),
+                    one_of(vec![
+                        Sequence::new(vec![
+                            Ref::new("NumericLiteralSegment").to_matchable(),
+                            Ref::keyword("MINUTES").optional().to_matchable(),
+                        ])
+                        .to_matchable(),
+                        Ref::new("NakedIdentifierSegment").to_matchable(),
+                    ])
+                    .to_matchable(),
+                ])
+                .to_matchable(),
+            ])
+            .to_matchable(),
+        ])
+        .to_matchable()
+    }
+    fn index_option_list() -> Matchable {
+        Bracketed::new(vec![
+            Delimited::new(vec![
+                Sequence::new(vec![
+                    one_of(vec![
+                        Ref::new("NakedIdentifierSegment").to_matchable(),
+                        // Reserved, so not a naked identifier.
+                        Ref::keyword("FILLFACTOR").to_matchable(),
+                    ])
+                    .to_matchable(),
+                    Ref::new("EqualsSegment").to_matchable(),
+                    one_of(vec![
+                        // ONLINE = ON (WAIT_AT_LOW_PRIORITY (MAX_DURATION = 1, ...))
+                        Sequence::new(vec![
+                            Ref::keyword("ON").to_matchable(),
+                            Bracketed::new(vec![
+                                Ref::keyword("WAIT_AT_LOW_PRIORITY").to_matchable(),
+                                low_priority_options(),
+                            ])
+                            .to_matchable(),
+                        ])
+                        .to_matchable(),
+                        Ref::keyword("ON").to_matchable(),
+                        Ref::keyword("OFF").to_matchable(),
+                        Sequence::new(vec![
+                            Ref::new("NumericLiteralSegment").to_matchable(),
+                            Ref::keyword("MINUTES").optional().to_matchable(),
+                        ])
+                        .to_matchable(),
+                        Ref::new("QuotedLiteralSegment").to_matchable(),
+                        Ref::new("NakedIdentifierSegment").to_matchable(),
+                    ])
+                    .to_matchable(),
+                    Ref::new("OnPartitionsSegment").optional().to_matchable(),
+                ])
+                .to_matchable(),
+                Sequence::new(vec![
+                    Ref::keyword("WAIT_AT_LOW_PRIORITY").to_matchable(),
+                    low_priority_options(),
+                ])
+                .to_matchable(),
+            ])
+            .to_matchable(),
+        ])
+        .to_matchable()
+    }
+    fn with_index_options() -> Matchable {
+        Sequence::new(vec![
+            Ref::keyword("WITH").to_matchable(),
+            index_option_list(),
+        ])
+        .config(|this| this.optional())
+        .to_matchable()
+    }
+    fn partition() -> Matchable {
+        Sequence::new(vec![
+            Ref::keyword("PARTITION").to_matchable(),
+            Ref::new("EqualsSegment").to_matchable(),
+            one_of(vec![
+                Ref::keyword("ALL").to_matchable(),
+                Ref::new("NumericLiteralSegment").to_matchable(),
+            ])
+            .to_matchable(),
+        ])
+        .config(|this| this.optional())
+        .to_matchable()
+    }
+    dialect.add([(
+        "AlterIndexStatementSegment".into(),
+        NodeMatcher::new(SyntaxKind::AlterIndexStatement, |_| {
+            Sequence::new(vec![
+                Ref::keyword("ALTER").to_matchable(),
+                Ref::keyword("INDEX").to_matchable(),
+                one_of(vec![
+                    Ref::keyword("ALL").to_matchable(),
+                    Ref::new("IndexReferenceSegment").to_matchable(),
+                ])
+                .to_matchable(),
+                Ref::keyword("ON").to_matchable(),
+                Ref::new("TableReferenceSegment").to_matchable(),
+                one_of(vec![
+                    Sequence::new(vec![
+                        Ref::keyword("REBUILD").to_matchable(),
+                        partition(),
+                        with_index_options(),
+                    ])
+                    .to_matchable(),
+                    Sequence::new(vec![
+                        Ref::keyword("REORGANIZE").to_matchable(),
+                        partition(),
+                        with_index_options(),
+                    ])
+                    .to_matchable(),
+                    Sequence::new(vec![
+                        Ref::keyword("SET").to_matchable(),
+                        index_option_list(),
+                    ])
+                    .to_matchable(),
+                    Sequence::new(vec![
+                        Ref::keyword("RESUME").to_matchable(),
+                        with_index_options(),
+                    ])
+                    .to_matchable(),
+                    Ref::keyword("DISABLE").to_matchable(),
+                    Ref::keyword("PAUSE").to_matchable(),
+                    Ref::keyword("ABORT").to_matchable(),
+                ])
+                .to_matchable(),
+            ])
+            .to_matchable()
+        })
+        .to_matchable()
+        .into(),
+    )]);
 
     // A query hint can follow a set operation:
     // SELECT ... INTERSECT SELECT ... OPTION (MERGE JOIN)
@@ -11060,6 +11201,9 @@ fn add_database_grammars(dialect: &mut Dialect) {
                                         Ref::keyword("LOCAL").to_matchable(),
                                         Ref::keyword("NONE").to_matchable(),
                                         Ref::keyword("DISABLED").to_matchable(),
+                                        // DELAYED_DURABILITY = FORCED | ALLOWED
+                                        Ref::keyword("FORCED").to_matchable(),
+                                        Ref::keyword("ALLOWED").to_matchable(),
                                     ])
                                     .config(|this| this.optional())
                                     .to_matchable(),
