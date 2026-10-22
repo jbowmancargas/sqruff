@@ -4,7 +4,10 @@ file:
     - sqlcmd_command_segment:
       - colon: ':'
       - sqlcmd_operator: r
-      - unquoted_relative_sql_file_path: script.sql
+      - object_reference:
+        - naked_identifier: script
+        - dot: .
+        - naked_identifier: sql
   - statement:
     - sqlcmd_command_segment:
       - colon: ':'

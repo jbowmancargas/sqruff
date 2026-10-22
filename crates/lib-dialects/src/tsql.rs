@@ -313,10 +313,13 @@ pub fn raw_dialect() -> Dialect {
     );
 
     // sqlcmd `:r <path>` relative file paths (e.g. .\folder\script.sql) (#4653)
+    // Only lex it as a path when it looks like one (a leading `.` or a
+    // `\ / # -`), so a column called `sql` (`c.SQL`) stays an identifier.
+    // A bare `:r script.sql` is handled in SqlcmdCommandSegment instead.
     dialect.insert_lexer_matchers(
         vec![Matcher::regex(
             "unquoted_relative_sql_file_path",
-            r"[.\w\\/#-]+\.[sS][qQ][lL](?-u:\b)",
+            r"(?:[.\w]*[\\/#-][.\w\\/#-]*|\.[.\w\\/#-]*)\.[sS][qQ][lL](?-u:\b)",
             SyntaxKind::UnquotedRelativeSqlFilePath,
         )],
         "back_quote",
@@ -4289,7 +4292,12 @@ pub fn raw_dialect() -> Dialect {
                     ])
                     .config(|this| this.disallow_gaps())
                     .to_matchable(),
-                    Ref::new("SqlcmdFilePathSegment").to_matchable(),
+                    one_of(vec![
+                        Ref::new("SqlcmdFilePathSegment").to_matchable(),
+                        // script.sql
+                        Ref::new("ObjectReferenceSegment").to_matchable(),
+                    ])
+                    .to_matchable(),
                 ])
                 .to_matchable(),
                 // :setvar <name> <value>
@@ -6704,6 +6712,22 @@ pub fn raw_dialect() -> Dialect {
 
     let alter_table_options = dialect.grammar("AlterTableOptionsGrammar").copy(
         Some(vec![
+            // SSMS scripts this after CREATE TABLE.
+            Sequence::new(vec![
+                Ref::keyword("SET").to_matchable(),
+                Bracketed::new(vec![
+                    Ref::keyword("LOCK_ESCALATION").to_matchable(),
+                    Ref::new("EqualsSegment").to_matchable(),
+                    one_of(vec![
+                        Ref::keyword("AUTO").to_matchable(),
+                        Ref::keyword("TABLE").to_matchable(),
+                        Ref::keyword("DISABLE").to_matchable(),
+                    ])
+                    .to_matchable(),
+                ])
+                .to_matchable(),
+            ])
+            .to_matchable(),
             Sequence::new(vec![
                 Ref::keyword("DROP").to_matchable(),
                 Delimited::new(vec![

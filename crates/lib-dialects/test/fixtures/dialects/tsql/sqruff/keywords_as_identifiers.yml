@@ -1,0 +1,83 @@
+file:
+- batch:
+  - statement:
+    - select_statement:
+      - select_clause:
+        - keyword: SELECT
+        - select_clause_element:
+          - column_reference:
+            - naked_identifier: c
+            - dot: .
+            - naked_identifier: SQL
+        - comma: ','
+        - select_clause_element:
+          - column_reference:
+            - naked_identifier: c
+            - dot: .
+            - naked_identifier: FilterSQL
+        - comma: ','
+        - select_clause_element:
+          - column_reference:
+            - naked_identifier: m
+            - dot: .
+            - naked_identifier: definition
+      - from_clause:
+        - keyword: FROM
+        - from_expression:
+          - from_expression_element:
+            - table_expression:
+              - table_reference:
+                - object_reference:
+                  - naked_identifier: dbo
+                  - dot: .
+                  - naked_identifier: CustomQuery
+            - alias_expression:
+              - alias_operator:
+                - keyword: AS
+              - naked_identifier: c
+          - join_clause:
+            - keyword: INNER
+            - keyword: JOIN
+            - from_expression_element:
+              - table_expression:
+                - table_reference:
+                  - object_reference:
+                    - naked_identifier: sys
+                    - dot: .
+                    - naked_identifier: sql_modules
+              - alias_expression:
+                - alias_operator:
+                  - keyword: AS
+                - naked_identifier: m
+            - join_on_condition:
+              - keyword: ON
+              - expression:
+                - column_reference:
+                  - naked_identifier: m
+                  - dot: .
+                  - naked_identifier: object_id
+                - comparison_operator:
+                  - raw_comparison_operator: =
+                - column_reference:
+                  - naked_identifier: c
+                  - dot: .
+                  - naked_identifier: ObjectID
+  - statement_terminator: ;
+  - statement:
+    - alter_table_statement:
+      - keyword: ALTER
+      - keyword: TABLE
+      - table_reference:
+        - object_reference:
+          - quoted_identifier: '[dbo]'
+          - dot: .
+          - quoted_identifier: '[ScreenUsageDaily]'
+      - keyword: SET
+      - bracketed:
+        - start_bracket: (
+        - keyword: LOCK_ESCALATION
+        - comparison_operator:
+          - raw_comparison_operator: =
+        - keyword: DISABLE
+        - end_bracket: )
+  - statement_terminator: ;
