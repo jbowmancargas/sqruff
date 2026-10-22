@@ -2,8 +2,45 @@ use crate::commands::FixArgs;
 use crate::commands::Format;
 use crate::linter;
 use sqruff_lib::core::config::FluffConfig;
+use sqruff_lib::core::linter::core::Linter;
 use std::io::{self, Write};
 use std::path::Path;
+
+/// Extra fix passes over already-fixed SQL. Some fixes change the structure
+/// (e.g. TQ02 wraps a body in BEGIN/END) and the rest of the file only lines
+/// up with that once it is parsed again.
+const EXTRA_FIX_PASSES: usize = 2;
+
+/// Re-lint and fix `fixed` until it stops changing (or the pass limit is hit).
+fn refix(linter: &Linter, mut fixed: String, fix_even_unparsable: bool) -> String {
+    for _ in 0..EXTRA_FIX_PASSES {
+        let Ok(result) = linter.lint_string(&fixed, None, true) else {
+            break;
+        };
+        if !result.has_fixes() || (result.has_parse_or_templating_errors() && !fix_even_unparsable)
+        {
+            break;
+        }
+        let again = result.fix_file_string();
+        if again == fixed {
+            break;
+        }
+        fixed = again;
+    }
+    fixed
+}
+
+/// A linter for the extra passes that does not report violations again.
+fn quiet_linter(config: &FluffConfig, collect_parse_errors: bool) -> Option<Linter> {
+    linter(
+        config.clone(),
+        Format::None,
+        collect_parse_errors,
+        true,
+        true,
+    )
+    .ok()
+}
 
 pub(crate) fn run_fix(
     args: FixArgs,
@@ -26,6 +63,7 @@ pub(crate) fn run_fix(
         .get("large_file_skip_fail", "core")
         .as_bool()
         .unwrap_or(false);
+    let refix_linter = quiet_linter(&config, collect_parse_errors);
     let mut linter = match linter(config, format, collect_parse_errors, quiet, true) {
         Ok(l) => l,
         Err(e) => {
@@ -68,7 +106,10 @@ pub(crate) fn run_fix(
                 continue;
             }
             let path = std::mem::take(&mut file.path);
-            let fixed = file.fix_file_string();
+            let mut fixed = file.fix_file_string();
+            if let Some(refix_linter) = &refix_linter {
+                fixed = refix(refix_linter, fixed, fix_even_unparsable);
+            }
             std::fs::write(path, fixed).unwrap();
         }
 
@@ -93,6 +134,7 @@ pub(crate) fn run_fix_stdin(
         .as_bool()
         .unwrap_or(false);
 
+    let refix_linter = quiet_linter(&config, collect_parse_errors);
     let linter = match linter(config, format, collect_parse_errors, quiet, true) {
         Ok(l) => l,
         Err(e) => {
@@ -120,7 +162,11 @@ pub(crate) fn run_fix_stdin(
         && result.has_fixes()
         && (fix_even_unparsable || !result.has_parse_or_templating_errors());
     let output = if has_fixes {
-        result.fix_file_string()
+        let fixed = result.fix_file_string();
+        match &refix_linter {
+            Some(refix_linter) => refix(refix_linter, fixed, fix_even_unparsable),
+            None => fixed,
+        }
     } else {
         read_in
     };
@@ -213,6 +259,29 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(tmp.path()).unwrap(),
             "SELECT a FROM foo"
+        );
+    }
+
+    #[test]
+    fn run_fix_reindents_after_structural_fixes() {
+        let mut tmp = tempfile::Builder::new().suffix(".sql").tempfile().unwrap();
+        write!(tmp, "CREATE PROCEDURE p\nAS\nSELECT 1;\nSELECT 2;\n").unwrap();
+        tmp.flush().unwrap();
+
+        let args = FixArgs {
+            paths: vec![tmp.path().to_path_buf()],
+            format: Format::None,
+            quiet: false,
+            verbose: 0,
+            disregard_sqruffignores: false,
+        };
+        let config =
+            FluffConfig::from_source("[sqruff]\ndialect = tsql\nrules = TQ02,LT02\n", None);
+
+        run_fix(args, config, ignore_none, true);
+        assert_eq!(
+            std::fs::read_to_string(tmp.path()).unwrap(),
+            "CREATE PROCEDURE p\nAS\nBEGIN\n    SELECT 1;\n    SELECT 2;\nEND\n"
         );
     }
 }
