@@ -1862,6 +1862,8 @@ pub fn raw_dialect() -> Dialect {
             "DeclareStatementGrammar".into(),
             Sequence::new(vec![
                 Ref::keyword("DECLARE").to_matchable(),
+                // Variables listed one per line indent under DECLARE.
+                MetaSegment::indent().to_matchable(),
                 // Multiple variables can be declared with comma separation
                 Delimited::new(vec![
                     Sequence::new(vec![
@@ -1904,6 +1906,7 @@ pub fn raw_dialect() -> Dialect {
                     .to_matchable(),
                 ])
                 .to_matchable(),
+                MetaSegment::dedent().to_matchable(),
             ])
             .to_matchable()
             .into(),

@@ -1119,6 +1119,29 @@ test_fail_tsql_while_body:
     core:
       dialect: tsql
 
+test_fail_tsql_declare_multiple_variables:
+  fail_str: |
+    DECLARE
+    @a INT,
+    @b INT = (
+        SELECT 1
+    );
+    DECLARE @c INT = (
+        SELECT 1
+    );
+  fix_str: |
+    DECLARE
+        @a INT,
+        @b INT = (
+            SELECT 1
+        );
+    DECLARE @c INT = (
+        SELECT 1
+    );
+  configs:
+    core:
+      dialect: tsql
+
 test_pass_exasol_func_indent:
   pass_str: |
     CREATE FUNCTION schem.func (
