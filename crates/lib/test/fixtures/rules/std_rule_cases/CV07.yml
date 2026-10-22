@@ -57,6 +57,17 @@ test_fail_outer_brackets_inner_subquery_tsql:
     core:
       dialect: tsql
 
+test_pass_declare_table_variable_tsql:
+  pass_str: |
+    DECLARE @docs TABLE (bDocumentID INT);
+    DECLARE @t TABLE (
+        id INT PRIMARY KEY,
+        name VARCHAR(10)
+    );
+  configs:
+    core:
+      dialect: tsql
+
 test_pass_begin_end_statement_brackets_tsql:
   ignored: "tsql not quite working yet"
   pass_str: |

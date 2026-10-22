@@ -167,17 +167,17 @@ impl RuleCV07 {
     ) -> Vec<(ErasedSegment, ErasedSegment)> {
         Self::iter_statements(file_segment)
             .into_iter()
-            .flat_map(|stmt| {
-                stmt.segments()
-                    .iter()
-                    .filter_map(|seg| {
-                        if seg.is_type(SyntaxKind::Bracketed) {
-                            Some((stmt.clone(), seg.clone()))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
+            .filter_map(|stmt| {
+                // Only a bracket that wraps the whole statement counts. Some
+                // dialects (e.g. T-SQL `DECLARE @t TABLE (...)`) put required
+                // brackets directly under the statement next to other code.
+                let mut code = stmt.segments().iter().filter(|seg| seg.is_code());
+                let only = code.next()?;
+                if code.next().is_none() && only.is_type(SyntaxKind::Bracketed) {
+                    Some((stmt.clone(), only.clone()))
+                } else {
+                    None
+                }
             })
             .collect()
     }
