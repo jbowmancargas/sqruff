@@ -269,7 +269,7 @@ file:
           - keyword: FROM
           - tsql_variable: '@CursorVar'
       - keyword: END
-  - statement_terminator: ;
+    - statement_terminator: ;
   - statement:
     - close_cursor_statement:
       - keyword: CLOSE

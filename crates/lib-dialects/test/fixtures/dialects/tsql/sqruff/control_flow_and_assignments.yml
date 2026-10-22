@@ -1,0 +1,208 @@
+file:
+- batch:
+  - statement:
+    - keyword: IF
+    - expression:
+      - integer_literal: '1'
+      - comparison_operator:
+        - raw_comparison_operator: =
+      - integer_literal: '1'
+    - statement:
+      - keyword: BEGIN
+      - statement:
+        - keyword: PRINT
+        - expression:
+          - integer_literal: '1'
+      - statement_terminator: ;
+      - keyword: END
+    - statement_terminator: ;
+    - keyword: ELSE
+    - statement:
+      - keyword: BEGIN
+      - statement:
+        - keyword: PRINT
+        - expression:
+          - integer_literal: '2'
+      - statement_terminator: ;
+      - keyword: END
+    - statement_terminator: ;
+  - statement:
+    - keyword: WHILE
+    - expression:
+      - parameterized_expression:
+        - tsql_variable: '@i'
+      - comparison_operator:
+        - raw_comparison_operator: <
+      - integer_literal: '10'
+    - statement:
+      - keyword: BEGIN
+      - statement:
+        - keyword: IF
+        - expression:
+          - parameterized_expression:
+            - tsql_variable: '@i'
+          - comparison_operator:
+            - raw_comparison_operator: =
+          - integer_literal: '5'
+        - statement:
+          - break_statement:
+            - keyword: BREAK
+        - statement_terminator: ;
+      - statement:
+        - set_local_variable_segment:
+          - keyword: SET
+          - tsql_variable: '@i'
+          - assignment_operator:
+            - raw_comparison_operator: =
+          - expression:
+            - parameterized_expression:
+              - tsql_variable: '@i'
+            - binary_operator: +
+            - integer_literal: '1'
+      - statement_terminator: ;
+      - statement:
+        - continue_statement:
+          - keyword: CONTINUE
+      - statement_terminator: ;
+      - keyword: END
+  - statement:
+    - update_statement:
+      - keyword: UPDATE
+      - table_reference:
+        - object_reference:
+          - naked_identifier: t
+      - set_clause_list:
+        - keyword: SET
+        - set_clause:
+          - tsql_variable: '@old'
+          - assignment_operator:
+            - raw_comparison_operator: =
+          - expression:
+            - column_reference:
+              - naked_identifier: a
+        - comma: ','
+        - set_clause:
+          - column_reference:
+            - naked_identifier: a
+          - assignment_operator:
+            - raw_comparison_operator: =
+          - expression:
+            - parameterized_expression:
+              - tsql_variable: '@new'
+        - comma: ','
+        - set_clause:
+          - tsql_variable: '@v'
+          - assignment_operator:
+            - raw_comparison_operator: =
+          - column_reference:
+            - naked_identifier: b
+          - assignment_operator:
+            - raw_comparison_operator: =
+          - expression:
+            - column_reference:
+              - naked_identifier: b
+            - binary_operator: +
+            - integer_literal: '1'
+      - where_clause:
+        - keyword: WHERE
+        - expression:
+          - column_reference:
+            - naked_identifier: c
+          - comparison_operator:
+            - raw_comparison_operator: =
+          - integer_literal: '1'
+  - statement_terminator: ;
+  - statement:
+    - raiserror_statement:
+      - keyword: RAISERROR
+      - bracketed:
+        - start_bracket: (
+        - quoted_literal: '''Not intended for this customer'''
+        - comma: ','
+        - numeric_literal: '20'
+        - comma: ','
+        - expression:
+          - numeric_literal:
+            - sign_indicator: '-'
+            - numeric_literal: '1'
+        - end_bracket: )
+      - keyword: WITH
+      - keyword: LOG
+  - statement_terminator: ;
+  - statement:
+    - set_local_variable_segment:
+      - keyword: SET
+      - tsql_variable: '@Errors'
+      - datatype_method:
+        - dot: .
+        - datatype_method_name_identifier: modify
+        - function_contents:
+          - bracketed:
+            - start_bracket: (
+            - expression:
+              - quoted_literal: '''insert <Error /> as last into (/Errors)[1]'''
+            - end_bracket: )
+  - statement_terminator: ;
+  - statement:
+    - keyword: IF
+    - expression:
+      - column_reference:
+        - tsql_variable: '@changes'
+        - datatype_method:
+          - dot: .
+          - datatype_method_name_identifier: exist
+          - function_contents:
+            - bracketed:
+              - start_bracket: (
+              - expression:
+                - quoted_literal: '''Vault/*'''
+              - end_bracket: )
+      - comparison_operator:
+        - raw_comparison_operator: =
+      - integer_literal: '1'
+    - statement:
+      - keyword: PRINT
+      - expression:
+        - quoted_literal: '''changed'''
+    - statement_terminator: ;
+  - statement:
+    - set_expression:
+      - select_statement:
+        - select_clause:
+          - keyword: SELECT
+          - select_clause_element:
+            - column_reference:
+              - naked_identifier: a
+        - from_clause:
+          - keyword: FROM
+          - from_expression:
+            - from_expression_element:
+              - table_expression:
+                - table_reference:
+                  - object_reference:
+                    - naked_identifier: t
+      - set_operator:
+        - keyword: INTERSECT
+      - select_statement:
+        - select_clause:
+          - keyword: SELECT
+          - select_clause_element:
+            - column_reference:
+              - naked_identifier: a
+        - from_clause:
+          - keyword: FROM
+          - from_expression:
+            - from_expression_element:
+              - table_expression:
+                - table_reference:
+                  - object_reference:
+                    - naked_identifier: u
+      - option_clause:
+        - keyword: OPTION
+        - bracketed:
+          - start_bracket: (
+          - query_hint_segment:
+            - keyword: MERGE
+            - keyword: JOIN
+          - end_bracket: )
+  - statement_terminator: ;

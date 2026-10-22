@@ -90,6 +90,6 @@ file:
                     - numeric_literal: '10'
                     - end_bracket: )
               - keyword: END
-          - statement_terminator: ;
+            - statement_terminator: ;
   - go_statement:
     - keyword: GO

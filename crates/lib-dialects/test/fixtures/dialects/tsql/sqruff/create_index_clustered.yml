@@ -2,138 +2,133 @@ file:
 - batch:
   - statement:
     - create_index_statement:
-      - create_index_statement:
-        - keyword: CREATE
-        - keyword: NONCLUSTERED
-        - keyword: INDEX
-        - database_reference:
-          - naked_identifier: IX_DocumentID
-        - keyword: ON
-        - table_reference:
-          - object_reference:
-            - hash_identifier: '#docs'
-        - bracketed_index_column_list_grammar:
-          - bracketed:
-            - start_bracket: (
-            - index_column_definition:
-              - naked_identifier: DocumentID
-            - comma: ','
-            - index_column_definition:
-              - naked_identifier: DocumentLineID
-            - end_bracket: )
-  - statement_terminator: ;
-  - statement:
-    - create_index_statement:
-      - create_index_statement:
-        - keyword: CREATE
-        - keyword: NONCLUSTERED
-        - keyword: INDEX
-        - database_reference:
-          - naked_identifier: IX_Audit_ChangeDate
-        - keyword: ON
-        - table_reference:
-          - object_reference:
-            - quoted_identifier: '[CRM]'
-            - dot: .
-            - quoted_identifier: '[AuditTrail]'
-        - bracketed_index_column_list_grammar:
-          - bracketed:
-            - start_bracket: (
-            - index_column_definition:
-              - naked_identifier: ChangeDate
-              - keyword: DESC
-            - end_bracket: )
-        - keyword: INCLUDE
+      - keyword: CREATE
+      - keyword: NONCLUSTERED
+      - keyword: INDEX
+      - database_reference:
+        - naked_identifier: IX_DocumentID
+      - keyword: ON
+      - table_reference:
+        - object_reference:
+          - hash_identifier: '#docs'
+      - bracketed_index_column_list_grammar:
         - bracketed:
           - start_bracket: (
-          - column_reference:
-            - naked_identifier: ChangeDescription
+          - index_column_definition:
+            - naked_identifier: DocumentID
+          - comma: ','
+          - index_column_definition:
+            - naked_identifier: DocumentLineID
           - end_bracket: )
   - statement_terminator: ;
   - statement:
     - create_index_statement:
-      - create_index_statement:
-        - keyword: CREATE
-        - keyword: UNIQUE
-        - keyword: NONCLUSTERED
-        - keyword: INDEX
-        - database_reference:
-          - quoted_identifier: '[IX_KeyFields]'
-        - keyword: ON
-        - table_reference:
-          - object_reference:
-            - quoted_identifier: '[Dashboard]'
-            - dot: .
-            - quoted_identifier: '[Unposted]'
-        - bracketed_index_column_list_grammar:
-          - bracketed:
-            - start_bracket: (
-            - index_column_definition:
-              - quoted_identifier: '[DocumentID]'
-              - keyword: ASC
-            - end_bracket: )
-        - relational_index_options:
-          - keyword: WITH
-          - bracketed:
-            - start_bracket: (
-            - keyword: PAD_INDEX
-            - comparison_operator:
-              - raw_comparison_operator: =
-            - keyword: OFF
-            - comma: ','
-            - keyword: STATISTICS_NORECOMPUTE
-            - comparison_operator:
-              - raw_comparison_operator: =
-            - keyword: OFF
-            - end_bracket: )
-        - on_partition_or_filegroup_statement:
-          - filegroup_clause:
-            - keyword: ON
-            - filegroup_name:
-              - quoted_identifier: '[PRIMARY]'
+      - keyword: CREATE
+      - keyword: NONCLUSTERED
+      - keyword: INDEX
+      - database_reference:
+        - naked_identifier: IX_Audit_ChangeDate
+      - keyword: ON
+      - table_reference:
+        - object_reference:
+          - quoted_identifier: '[CRM]'
+          - dot: .
+          - quoted_identifier: '[AuditTrail]'
+      - bracketed_index_column_list_grammar:
+        - bracketed:
+          - start_bracket: (
+          - index_column_definition:
+            - naked_identifier: ChangeDate
+            - keyword: DESC
+          - end_bracket: )
+      - keyword: INCLUDE
+      - bracketed:
+        - start_bracket: (
+        - column_reference:
+          - naked_identifier: ChangeDescription
+        - end_bracket: )
   - statement_terminator: ;
   - statement:
     - create_index_statement:
-      - create_index_statement:
-        - keyword: CREATE
-        - keyword: INDEX
-        - database_reference:
-          - naked_identifier: IX_PlanID
-        - keyword: ON
-        - table_reference:
-          - object_reference:
-            - naked_identifier: TransactionDetail
-        - bracketed_index_column_list_grammar:
-          - bracketed:
-            - start_bracket: (
-            - index_column_definition:
-              - naked_identifier: PlanID
-            - end_bracket: )
-        - where_clause:
-          - keyword: WHERE
-          - expression:
-            - column_reference:
-              - naked_identifier: PlanID
-            - keyword: IS
-            - keyword: NOT
-            - null_literal: 'NULL'
+      - keyword: CREATE
+      - keyword: UNIQUE
+      - keyword: NONCLUSTERED
+      - keyword: INDEX
+      - database_reference:
+        - quoted_identifier: '[IX_KeyFields]'
+      - keyword: ON
+      - table_reference:
+        - object_reference:
+          - quoted_identifier: '[Dashboard]'
+          - dot: .
+          - quoted_identifier: '[Unposted]'
+      - bracketed_index_column_list_grammar:
+        - bracketed:
+          - start_bracket: (
+          - index_column_definition:
+            - quoted_identifier: '[DocumentID]'
+            - keyword: ASC
+          - end_bracket: )
+      - relational_index_options:
+        - keyword: WITH
+        - bracketed:
+          - start_bracket: (
+          - keyword: PAD_INDEX
+          - comparison_operator:
+            - raw_comparison_operator: =
+          - keyword: OFF
+          - comma: ','
+          - keyword: STATISTICS_NORECOMPUTE
+          - comparison_operator:
+            - raw_comparison_operator: =
+          - keyword: OFF
+          - end_bracket: )
+      - on_partition_or_filegroup_statement:
+        - filegroup_clause:
+          - keyword: ON
+          - filegroup_name:
+            - quoted_identifier: '[PRIMARY]'
   - statement_terminator: ;
   - statement:
     - create_index_statement:
-      - create_index_statement:
-        - keyword: CREATE
-        - keyword: CLUSTERED
-        - keyword: INDEX
-        - database_reference:
-          - naked_identifier: IX_c
-        - keyword: ON
-        - table_reference:
-          - object_reference:
-            - naked_identifier: t
-        - bracketed_index_column_list_grammar:
-          - bracketed:
-            - start_bracket: (
-            - index_column_definition:
-              - naked_identifier: a
-            - end_bracket: )
+      - keyword: CREATE
+      - keyword: INDEX
+      - database_reference:
+        - naked_identifier: IX_PlanID
+      - keyword: ON
+      - table_reference:
+        - object_reference:
+          - naked_identifier: TransactionDetail
+      - bracketed_index_column_list_grammar:
+        - bracketed:
+          - start_bracket: (
+          - index_column_definition:
+            - naked_identifier: PlanID
+          - end_bracket: )
+      - where_clause:
+        - keyword: WHERE
+        - expression:
+          - column_reference:
+            - naked_identifier: PlanID
+          - keyword: IS
+          - keyword: NOT
+          - null_literal: 'NULL'
+  - statement_terminator: ;
+  - statement:
+    - create_index_statement:
+      - keyword: CREATE
+      - keyword: CLUSTERED
+      - keyword: INDEX
+      - database_reference:
+        - naked_identifier: IX_c
+      - keyword: ON
+      - table_reference:
+        - object_reference:
+          - naked_identifier: t
+      - bracketed_index_column_list_grammar:
+        - bracketed:
+          - start_bracket: (
+          - index_column_definition:
+            - naked_identifier: a
+          - end_bracket: )
   - statement_terminator: ;

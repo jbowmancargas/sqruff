@@ -79,9 +79,8 @@ file:
       - select_clause:
         - keyword: SELECT
         - select_clause_element:
-          - expression:
-            - parameterized_expression:
-              - tsql_variable: '@XML'
+          - column_reference:
+            - tsql_variable: '@XML'
             - datatype_method:
               - dot: .
               - datatype_method_name_identifier: value
@@ -174,9 +173,8 @@ file:
       - select_clause:
         - keyword: select
         - select_clause_element:
-          - expression:
-            - parameterized_expression:
-              - tsql_variable: '@xml'
+          - column_reference:
+            - tsql_variable: '@xml'
             - datatype_method:
               - dot: .
               - datatype_method_name_identifier: query
@@ -201,9 +199,8 @@ file:
       - select_clause:
         - keyword: SELECT
         - select_clause_element:
-          - expression:
-            - parameterized_expression:
-              - tsql_variable: '@hierarchyid'
+          - column_reference:
+            - tsql_variable: '@hierarchyid'
             - datatype_method:
               - dot: .
               - datatype_method_name_identifier: GetAncestor
@@ -251,9 +248,8 @@ file:
       - select_clause:
         - keyword: select
         - select_clause_element:
-          - expression:
-            - parameterized_expression:
-              - tsql_variable: '@geometry'
+          - column_reference:
+            - tsql_variable: '@geometry'
             - datatype_method:
               - dot: .
               - datatype_method_name_identifier: STEndPoint
@@ -308,9 +304,8 @@ file:
       - select_clause:
         - keyword: SELECT
         - select_clause_element:
-          - expression:
-            - parameterized_expression:
-              - tsql_variable: '@geography'
+          - column_reference:
+            - tsql_variable: '@geography'
             - datatype_method:
               - dot: .
               - datatype_method_name_identifier: STArea
@@ -326,9 +321,8 @@ file:
       - select_clause:
         - keyword: SELECT
         - select_clause_element:
-          - expression:
-            - parameterized_expression:
-              - tsql_variable: '@geography'
+          - column_reference:
+            - tsql_variable: '@geography'
             - datatype_method:
               - dot: .
               - datatype_method_name_identifier: STDistance
