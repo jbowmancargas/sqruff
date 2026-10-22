@@ -2235,14 +2235,53 @@ pub fn raw_dialect() -> Dialect {
             "IfStatementGrammar".into(),
             Sequence::new(vec![
                 Ref::keyword("IF").to_matchable(),
-                Ref::new("ExpressionSegment").to_matchable(),
-                Ref::new("StatementSegment").to_matchable(),
+                Ref::new("ConditionGrammar").to_matchable(),
+                Ref::new("ControlFlowBodyGrammar").to_matchable(),
                 Sequence::new(vec![
                     Ref::keyword("ELSE").to_matchable(),
-                    Ref::new("StatementSegment").to_matchable(),
+                    one_of(vec![
+                        // Keep ELSE IF chains flat instead of nesting each IF deeper.
+                        Ref::new("IfStatementSegment").to_matchable(),
+                        Ref::new("ControlFlowBodyGrammar").to_matchable(),
+                    ])
+                    .to_matchable(),
                 ])
                 .config(|this| this.optional())
                 .to_matchable(),
+            ])
+            .to_matchable()
+            .into(),
+        ),
+        // A continued condition indents under its keyword, like WHERE/HAVING.
+        (
+            "ConditionGrammar".into(),
+            Sequence::new(vec![
+                MetaSegment::implicit_indent().to_matchable(),
+                Ref::new("ExpressionSegment").to_matchable(),
+                MetaSegment::dedent().to_matchable(),
+            ])
+            .to_matchable()
+            .into(),
+        ),
+        // A single-statement body is indented; a BEGIN...END body stays level
+        // with its IF/ELSE/WHILE keyword and indents its own contents.
+        (
+            "ControlFlowBodyGrammar".into(),
+            one_of(vec![
+                Sequence::new(vec![
+                    MetaSegment::indent().to_matchable(),
+                    Ref::new("StatementSegment")
+                        .exclude(one_of(vec![
+                            Ref::new("BeginEndBlockSegment").to_matchable(),
+                            Ref::new("TryBlockSegment").to_matchable(),
+                        ]))
+                        .to_matchable(),
+                    // Lets `IF x PRINT 'a'; ELSE ...` reach the ELSE.
+                    Ref::new("DelimiterGrammar").optional().to_matchable(),
+                    MetaSegment::dedent().to_matchable(),
+                ])
+                .to_matchable(),
+                Ref::new("StatementSegment").to_matchable(),
             ])
             .to_matchable()
             .into(),
@@ -2259,8 +2298,8 @@ pub fn raw_dialect() -> Dialect {
             "WhileStatementGrammar".into(),
             Sequence::new(vec![
                 Ref::keyword("WHILE").to_matchable(),
-                Ref::new("ExpressionSegment").to_matchable(),
-                Ref::new("StatementSegment").to_matchable(),
+                Ref::new("ConditionGrammar").to_matchable(),
+                Ref::new("ControlFlowBodyGrammar").to_matchable(),
             ])
             .to_matchable()
             .into(),
@@ -3441,6 +3480,102 @@ pub fn raw_dialect() -> Dialect {
         .to_matchable()
         .into(),
     )]);
+    // https://learn.microsoft.com/en-us/sql/t-sql/statements/bulk-insert-transact-sql
+    dialect.add([
+        (
+            "BulkInsertStatementSegment".into(),
+            NodeMatcher::new(SyntaxKind::BulkInsertStatement, |_| {
+                Sequence::new(vec![
+                    Ref::keyword("BULK").to_matchable(),
+                    Ref::keyword("INSERT").to_matchable(),
+                    Ref::new("TableReferenceSegment").to_matchable(),
+                    Ref::keyword("FROM").to_matchable(),
+                    Ref::new("QuotedLiteralSegment").to_matchable(),
+                    Ref::new("BulkInsertStatementWithSegment")
+                        .optional()
+                        .to_matchable(),
+                ])
+                .to_matchable()
+            })
+            .to_matchable()
+            .into(),
+        ),
+        (
+            "BulkInsertStatementWithSegment".into(),
+            NodeMatcher::new(SyntaxKind::BulkInsertWithSegment, |_| {
+                Sequence::new(vec![
+                    Ref::keyword("WITH").to_matchable(),
+                    Bracketed::new(vec![
+                        Delimited::new(vec![
+                            Sequence::new(vec![
+                                one_of(vec![
+                                    Ref::keyword("BATCHSIZE").to_matchable(),
+                                    Ref::keyword("FIRSTROW").to_matchable(),
+                                    Ref::keyword("KILOBYTES_PER_BATCH").to_matchable(),
+                                    Ref::keyword("LASTROW").to_matchable(),
+                                    Ref::keyword("MAXERRORS").to_matchable(),
+                                    Ref::keyword("ROWS_PER_BATCH").to_matchable(),
+                                ])
+                                .to_matchable(),
+                                Ref::new("EqualsSegment").to_matchable(),
+                                Ref::new("NumericLiteralSegment").to_matchable(),
+                            ])
+                            .to_matchable(),
+                            Sequence::new(vec![
+                                one_of(vec![
+                                    Ref::keyword("CODEPAGE").to_matchable(),
+                                    Ref::keyword("DATAFILETYPE").to_matchable(),
+                                    Ref::keyword("DATA_SOURCE").to_matchable(),
+                                    Ref::keyword("ERRORFILE").to_matchable(),
+                                    Ref::keyword("ERRORFILE_DATA_SOURCE").to_matchable(),
+                                    Ref::keyword("FORMATFILE_DATA_SOURCE").to_matchable(),
+                                    Ref::keyword("ROWTERMINATOR").to_matchable(),
+                                    Ref::keyword("FORMAT").to_matchable(),
+                                    Ref::keyword("FIELDQUOTE").to_matchable(),
+                                    Ref::keyword("FORMATFILE").to_matchable(),
+                                    Ref::keyword("FIELDTERMINATOR").to_matchable(),
+                                ])
+                                .to_matchable(),
+                                Ref::new("EqualsSegment").to_matchable(),
+                                Ref::new("QuotedLiteralSegment").to_matchable(),
+                            ])
+                            .to_matchable(),
+                            Sequence::new(vec![
+                                Ref::keyword("ORDER").to_matchable(),
+                                Bracketed::new(vec![
+                                    Delimited::new(vec![
+                                        Sequence::new(vec![
+                                            Ref::new("ColumnReferenceSegment").to_matchable(),
+                                            one_of(vec![
+                                                Ref::keyword("ASC").to_matchable(),
+                                                Ref::keyword("DESC").to_matchable(),
+                                            ])
+                                            .config(|this| this.optional())
+                                            .to_matchable(),
+                                        ])
+                                        .to_matchable(),
+                                    ])
+                                    .to_matchable(),
+                                ])
+                                .to_matchable(),
+                            ])
+                            .to_matchable(),
+                            Ref::keyword("CHECK_CONSTRAINTS").to_matchable(),
+                            Ref::keyword("FIRE_TRIGGERS").to_matchable(),
+                            Ref::keyword("KEEPIDENTITY").to_matchable(),
+                            Ref::keyword("KEEPNULLS").to_matchable(),
+                            Ref::keyword("TABLOCK").to_matchable(),
+                        ])
+                        .to_matchable(),
+                    ])
+                    .to_matchable(),
+                ])
+                .to_matchable()
+            })
+            .to_matchable()
+            .into(),
+        ),
+    ]);
     dialect.add([(
         "OutputClauseSegment".into(),
         NodeMatcher::new(SyntaxKind::OutputClause, |_| {
@@ -3636,6 +3771,7 @@ pub fn raw_dialect() -> Dialect {
             Ref::new("SelectableGrammar").to_matchable(),
             Ref::new("MergeStatementSegment").to_matchable(),
             Ref::new("OpenQueryInsertStatementSegment").to_matchable(),
+            Ref::new("BulkInsertStatementSegment").to_matchable(),
             Ref::new("InsertStatementSegment").to_matchable(),
             Ref::new("TransactionStatementSegment").to_matchable(),
             Ref::new("DropTableStatementSegment").to_matchable(),
