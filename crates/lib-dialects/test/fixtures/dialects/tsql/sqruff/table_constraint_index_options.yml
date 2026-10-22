@@ -1,0 +1,145 @@
+file:
+- batch:
+  - statement:
+    - create_table_statement:
+      - create_table_statement:
+        - keyword: CREATE
+        - keyword: TABLE
+        - table_reference:
+          - object_reference:
+            - quoted_identifier: '[dbo]'
+            - dot: .
+            - quoted_identifier: '[RouteTemplate]'
+        - bracketed:
+          - start_bracket: (
+          - column_definition:
+            - quoted_identifier: '[RouteTemplateID]'
+            - data_type:
+              - keyword: INT
+            - column_constraint_segment:
+              - keyword: IDENTITY
+              - bracketed:
+                - start_bracket: (
+                - numeric_literal: '1'
+                - comma: ','
+                - numeric_literal: '1'
+                - end_bracket: )
+            - column_constraint_segment:
+              - keyword: NOT
+              - keyword: 'NULL'
+          - comma: ','
+          - column_definition:
+            - quoted_identifier: '[InActive]'
+            - data_type:
+              - keyword: BIT
+            - column_constraint_segment:
+              - keyword: CONSTRAINT
+              - object_reference:
+                - quoted_identifier: '[DF_RouteTemplate_InActive]'
+              - keyword: DEFAULT
+              - bracketed:
+                - start_bracket: (
+                - bracketed:
+                  - start_bracket: (
+                  - integer_literal: '0'
+                  - end_bracket: )
+                - end_bracket: )
+          - comma: ','
+          - table_constraint:
+            - keyword: CONSTRAINT
+            - object_reference:
+              - quoted_identifier: '[PK_RouteTemplate]'
+            - keyword: PRIMARY
+            - keyword: KEY
+            - keyword: CLUSTERED
+            - bracketed_index_column_list_grammar:
+              - bracketed:
+                - start_bracket: (
+                - index_column_definition:
+                  - quoted_identifier: '[RouteTemplateID]'
+                  - keyword: ASC
+                - end_bracket: )
+            - relational_index_options:
+              - keyword: WITH
+              - bracketed:
+                - start_bracket: (
+                - keyword: PAD_INDEX
+                - comparison_operator:
+                  - raw_comparison_operator: =
+                - keyword: OFF
+                - comma: ','
+                - keyword: STATISTICS_NORECOMPUTE
+                - comparison_operator:
+                  - raw_comparison_operator: =
+                - keyword: OFF
+                - comma: ','
+                - keyword: ALLOW_PAGE_LOCKS
+                - comparison_operator:
+                  - raw_comparison_operator: =
+                - keyword: ON
+                - end_bracket: )
+            - on_partition_or_filegroup_statement:
+              - filegroup_clause:
+                - keyword: ON
+                - filegroup_name:
+                  - quoted_identifier: '[PRIMARY]'
+          - end_bracket: )
+        - keyword: ON
+        - table_reference:
+          - object_reference:
+            - quoted_identifier: '[PRIMARY]'
+  - statement_terminator: ;
+  - statement:
+    - create_table_statement:
+      - create_table_statement:
+        - keyword: CREATE
+        - keyword: TABLE
+        - table_reference:
+          - object_reference:
+            - naked_identifier: t
+        - bracketed:
+          - start_bracket: (
+          - column_definition:
+            - naked_identifier: a
+            - data_type:
+              - keyword: INT
+          - comma: ','
+          - table_constraint:
+            - keyword: CONSTRAINT
+            - object_reference:
+              - naked_identifier: UQ_a
+            - keyword: UNIQUE
+            - keyword: NONCLUSTERED
+            - bracketed_index_column_list_grammar:
+              - bracketed:
+                - start_bracket: (
+                - index_column_definition:
+                  - naked_identifier: a
+                - end_bracket: )
+            - relational_index_options:
+              - keyword: WITH
+              - bracketed:
+                - start_bracket: (
+                - keyword: PAD_INDEX
+                - comparison_operator:
+                  - raw_comparison_operator: =
+                - keyword: OFF
+                - end_bracket: )
+          - comma: ','
+          - table_constraint:
+            - keyword: CONSTRAINT
+            - object_reference:
+              - naked_identifier: CK_a
+            - check_constraint_grammar:
+              - keyword: CHECK
+              - bracketed:
+                - start_bracket: (
+                - expression:
+                  - column_reference:
+                    - naked_identifier: a
+                  - comparison_operator:
+                    - raw_comparison_operator: '>'
+                  - integer_literal: '0'
+                - end_bracket: )
+          - end_bracket: )
+  - statement_terminator: ;

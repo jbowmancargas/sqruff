@@ -1,0 +1,11 @@
+CREATE NONCLUSTERED INDEX IX_DocumentID ON #docs (DocumentID, DocumentLineID);
+
+CREATE NONCLUSTERED INDEX IX_Audit_ChangeDate ON [CRM].[AuditTrail] (ChangeDate DESC)
+INCLUDE (ChangeDescription);
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_KeyFields] ON [Dashboard].[Unposted] ([DocumentID] ASC)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF) ON [PRIMARY];
+
+CREATE INDEX IX_PlanID ON TransactionDetail (PlanID) WHERE PlanID IS NOT NULL;
+
+CREATE CLUSTERED INDEX IX_c ON t (a);

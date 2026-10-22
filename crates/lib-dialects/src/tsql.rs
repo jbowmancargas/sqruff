@@ -3853,6 +3853,54 @@ pub fn raw_dialect() -> Dialect {
         .to_matchable(),
     );
 
+    // https://learn.microsoft.com/en-us/sql/t-sql/statements/create-index-transact-sql
+    dialect.replace_grammar(
+        "CreateIndexStatementSegment",
+        NodeMatcher::new(SyntaxKind::CreateIndexStatement, |_| {
+            Sequence::new(vec![
+                Ref::keyword("CREATE").to_matchable(),
+                Ref::new("OrReplaceGrammar").optional().to_matchable(),
+                Ref::keyword("UNIQUE").optional().to_matchable(),
+                one_of(vec![
+                    Ref::keyword("CLUSTERED").to_matchable(),
+                    Ref::keyword("NONCLUSTERED").to_matchable(),
+                ])
+                .config(|this| this.optional())
+                .to_matchable(),
+                one_of(vec![
+                    Ref::keyword("INDEX").to_matchable(),
+                    Ref::keyword("STATISTICS").to_matchable(),
+                ])
+                .to_matchable(),
+                Ref::new("IfNotExistsGrammar").optional().to_matchable(),
+                Ref::new("IndexReferenceSegment").to_matchable(),
+                MetaSegment::indent().to_matchable(),
+                Ref::keyword("ON").to_matchable(),
+                Ref::new("TableReferenceSegment").to_matchable(),
+                Ref::new("BracketedIndexColumnListGrammar").to_matchable(),
+                Sequence::new(vec![
+                    Ref::keyword("INCLUDE").to_matchable(),
+                    Ref::new("BracketedColumnReferenceListGrammar").to_matchable(),
+                ])
+                .config(|this| this.optional())
+                .to_matchable(),
+                Ref::new("WhereClauseSegment").optional().to_matchable(),
+                Ref::new("RelationalIndexOptionsSegment")
+                    .optional()
+                    .to_matchable(),
+                Ref::new("OnPartitionOrFilegroupOptionSegment")
+                    .optional()
+                    .to_matchable(),
+                Ref::new("FilestreamOnOptionSegment")
+                    .optional()
+                    .to_matchable(),
+                MetaSegment::dedent().to_matchable(),
+            ])
+            .to_matchable()
+        })
+        .to_matchable(),
+    );
+
     // T-SQL CREATE TRIGGER uses ON before the event timing and supports
     // CREATE OR ALTER.
     dialect.replace_grammar(
@@ -6312,7 +6360,18 @@ pub fn raw_dialect() -> Dialect {
                 // A primary or foreign key may have a column list and options.
                 // Keep this before the shorter column-constraint alternative so
                 // the Rust matcher does not stop after PRIMARY KEY CLUSTERED.
-                Ref::new("TableConstraintSegment").to_matchable(),
+                // A CHECK on a column is a column constraint, not a table one.
+                Ref::new("TableConstraintSegment")
+                    .exclude(Sequence::new(vec![
+                        Sequence::new(vec![
+                            Ref::keyword("CONSTRAINT").to_matchable(),
+                            Ref::new("ObjectReferenceSegment").to_matchable(),
+                        ])
+                        .config(|this| this.optional())
+                        .to_matchable(),
+                        Ref::keyword("CHECK").to_matchable(),
+                    ]))
+                    .to_matchable(),
                 Sequence::new(vec![
                     Sequence::new(vec![
                         Ref::keyword("CONSTRAINT").to_matchable(),
@@ -6493,9 +6552,17 @@ pub fn raw_dialect() -> Dialect {
                     Ref::new("BracketedColumnReferenceListGrammar").to_matchable(),
                 ])
                 .to_matchable(),
+                // SSMS scripts primary keys with index options and a filegroup:
+                // PRIMARY KEY CLUSTERED (id ASC) WITH (PAD_INDEX = OFF) ON [PRIMARY]
                 Sequence::new(vec![
                     Ref::new("PrimaryKeyGrammar").to_matchable(),
                     Ref::new("BracketedIndexColumnListGrammar").to_matchable(),
+                    Ref::new("RelationalIndexOptionsSegment")
+                        .optional()
+                        .to_matchable(),
+                    Ref::new("OnPartitionOrFilegroupOptionSegment")
+                        .optional()
+                        .to_matchable(),
                 ])
                 .to_matchable(),
                 Sequence::new(vec![
@@ -6504,6 +6571,7 @@ pub fn raw_dialect() -> Dialect {
                     Ref::new("ReferencesConstraintGrammar").to_matchable(),
                 ])
                 .to_matchable(),
+                Ref::new("CheckConstraintGrammar").to_matchable(),
             ])
             .to_matchable(),
         ])
