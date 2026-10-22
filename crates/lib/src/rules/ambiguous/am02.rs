@@ -55,13 +55,27 @@ SELECT a, b FROM table_2
     }
 
     fn dialect_skip(&self) -> &'static [DialectKind] {
-        // TODO: add ansi, hive, mysql
-        // TODO This feels wrong and should bneed fixing
+        // Match SQLFluff: only run where UNION DISTINCT is valid syntax
+        // (ansi, bigquery, clickhouse, databricks, db2, hive, mysql, redshift,
+        // snowflake, trino). Elsewhere the fix would produce invalid SQL.
         &[
+            DialectKind::Athena,
+            DialectKind::Doris,
             DialectKind::Duckdb,
             DialectKind::Exasol,
+            DialectKind::Flink,
+            DialectKind::Greenplum,
+            DialectKind::Impala,
+            DialectKind::Mariadb,
+            DialectKind::Materialize,
+            DialectKind::Oracle,
             DialectKind::Postgres,
             DialectKind::Sparksql,
+            DialectKind::Sqlite,
+            DialectKind::Starrocks,
+            DialectKind::Teradata,
+            DialectKind::Tsql,
+            DialectKind::Vertica,
         ]
     }
 
@@ -134,6 +148,15 @@ mod tests {
             DialectKind::Trino,
         ] {
             assert!(!skipped.contains(&dialect));
+        }
+    }
+
+    #[test]
+    fn skipped_for_dialects_without_union_distinct() {
+        let skipped = RuleAM02.dialect_skip();
+
+        for dialect in [DialectKind::Tsql, DialectKind::Oracle, DialectKind::Sqlite] {
+            assert!(skipped.contains(&dialect));
         }
     }
 }
